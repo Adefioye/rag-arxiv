@@ -16,3 +16,9 @@ If you are not developing with Supabase, delete the `gen:supabase:types` script.
 If you are using Supabase, replace the `<YOUR_PROJECT_ID>` placeholder with your project ID.
 
 The web project is a default Next.js app with Tailwind CSS and TypeScript.
+
+## TODO
+
+- ConvertPdfToDocument
+- GenerateNotesFromDocuments
+- Create `prompt.ts`, Add `NOTES_TOOL_SCHEMA`, `NOTE_PROMPT`, `oututParser`, `ArxiVPaperNote`

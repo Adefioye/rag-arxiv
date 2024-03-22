@@ -2,5 +2,6 @@ node_modules/
 dist
 .turbo
 .env.development.local
+.env
 pdfs/**
 src/generated/**
