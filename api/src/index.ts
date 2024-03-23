@@ -71,44 +71,40 @@ async function generateNotes(
   return res;
 }
 
-async function main({
-  paperUrl,
-  name,
-  pagesToDelete,
-}: {
-  paperUrl: string;
-  name: string;
-  pagesToDelete?: number[];
-}) {
-  // if (!paperUrl.endsWith("pdf")) {
-  //   throw new Error("Not a PDF");
-  // }
+export async function takeNotes(
+  paperUrl: string,
+  name: string,
+  pagesToDelete: number[]
+): Promise<ArxivPaperNote[]> {
+  if (!paperUrl.endsWith("pdf")) {
+    throw new Error("Not a PDF");
+  }
 
-  // let pdfAsBuffer = await loadPdfFromUrl(paperUrl);
+  let pdfAsBuffer = await loadPdfFromUrl(paperUrl);
 
-  // if (pagesToDelete && pagesToDelete.length > 0) {
-  //   // Delete pages
-  //   pdfAsBuffer = await deletePages(pdfAsBuffer, pagesToDelete);
-  // }
-
-  // const documents = await convertPdfToDocument(pdfAsBuffer);
-  const documentsAsString = await readFile(`pdfs/document.json`, "utf-8");
-  const documents = JSON.parse(documentsAsString);
+  if (pagesToDelete && pagesToDelete.length > 0) {
+    // Delete pages
+    pdfAsBuffer = await deletePages(pdfAsBuffer, pagesToDelete);
+  }
+  const documents = await convertPdfToDocument(pdfAsBuffer);
+  // const documentsAsString = await readFile(`pdfs/document.json`, "utf-8");
+  // const documents = JSON.parse(documentsAsString);
   console.log("Documents: ", documents);
   const notes = await generateNotes(documents);
   const database = await SupabaseDatabase.fromDocuments(documents);
   console.log("Notes: ", notes);
-  console.log("Add paper to table...")
+  console.log("Add paper to table...");
   await Promise.all([
     database.addPaper({
       paper: formatDocumentsAsString(documents),
       url: paperUrl,
       notes,
       name,
-    }),
-    database.vectorStore.addDocuments(documents)
+    }), // NO need to do vectorStore.addDocuments since it has been done by SupabaseVectorStore.fromDocuments
   ]);
+
+  return notes;
 }
 
 console.log("Running main....");
-main({ paperUrl: "https://arxiv.org/pdf/2403.11905.pdf", name: "test" });
+// takeNotes("https://arxiv.org/pdf/2305.15334.pdf", "test", [10, 11, 12]);
