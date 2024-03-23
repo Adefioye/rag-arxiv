@@ -1,7 +1,7 @@
 import axios from "axios";
 import { PDFDocument } from "pdf-lib";
 import { Document } from "langchain/document";
-import { writeFile, unlink } from "fs/promises";
+import { writeFile, unlink, readFile } from "fs/promises";
 import { UnstructuredLoader } from "langchain/document_loaders/fs/unstructured";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { formatDocumentsAsString } from "langchain/util/document";
@@ -11,6 +11,7 @@ import {
   NOTE_PROMPT,
   outputParser,
 } from "prompt.js";
+import { SupabaseDatabase } from "database.js";
 
 async function deletePages(
   pdf: Buffer,
@@ -67,8 +68,6 @@ async function generateNotes(
   const res = await chain.invoke({
     paper: documentsAsString,
   });
-
-  console.log("Notes: ", res);
   return res;
 }
 
@@ -81,21 +80,34 @@ async function main({
   name: string;
   pagesToDelete?: number[];
 }) {
-  if (!paperUrl.endsWith("pdf")) {
-    throw new Error("Not a PDF");
-  }
+  // if (!paperUrl.endsWith("pdf")) {
+  //   throw new Error("Not a PDF");
+  // }
 
-  let pdfAsBuffer = await loadPdfFromUrl(paperUrl);
+  // let pdfAsBuffer = await loadPdfFromUrl(paperUrl);
 
-  if (pagesToDelete && pagesToDelete.length > 0) {
-    // Delete pages
-    pdfAsBuffer = await deletePages(pdfAsBuffer, pagesToDelete);
-  }
+  // if (pagesToDelete && pagesToDelete.length > 0) {
+  //   // Delete pages
+  //   pdfAsBuffer = await deletePages(pdfAsBuffer, pagesToDelete);
+  // }
 
-  const documents = await convertPdfToDocument(pdfAsBuffer);
-
-  console.log(documents);
+  // const documents = await convertPdfToDocument(pdfAsBuffer);
+  const documentsAsString = await readFile(`pdfs/document.json`, "utf-8");
+  const documents = JSON.parse(documentsAsString);
+  console.log("Documents: ", documents);
   const notes = await generateNotes(documents);
+  const database = await SupabaseDatabase.fromDocuments(documents);
+  console.log("Notes: ", notes);
+  console.log("Add paper to table...")
+  await Promise.all([
+    database.addPaper({
+      paper: formatDocumentsAsString(documents),
+      url: paperUrl,
+      notes,
+      name,
+    }),
+    database.vectorStore.addDocuments(documents)
+  ]);
 }
 
 console.log("Running main....");
