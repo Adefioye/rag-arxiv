@@ -1,5 +1,6 @@
 import express from "express";
-import { takeNotes } from "index.js";
+import { takeNotes } from "notes/index.js";
+import { qAPaper } from "qa/index.js";
 
 function main() {
   const app = express();
@@ -19,6 +20,14 @@ function main() {
     const notes = await takeNotes(paperUrl, name, pagesToDelete);
     console.log(notes);
     res.status(200).send(notes);
+    return;
+  });
+
+  app.post("/qa", async (req, res) => {
+    const { paperUrl, question } = req.body;
+    console.log(paperUrl, question);
+    const answerAndFollowupQuestions = await qAPaper(question, paperUrl);
+    res.status(200).send(answerAndFollowupQuestions);
     return;
   });
 

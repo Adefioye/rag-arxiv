@@ -19,6 +19,9 @@ The web project is a default Next.js app with Tailwind CSS and TypeScript.
 
 ## TODO
 
-- ConvertPdfToDocument
-- GenerateNotesFromDocuments
-- Create `prompt.ts`, Add `NOTES_TOOL_SCHEMA`, `NOTE_PROMPT`, `oututParser`, `ArxiVPaperNote`
+##### Build an API for returning questionAndFollowupQuestions
+- Build a qAModel with prompts that take in relevant docs, notes and question to return `question and followup questions` based on bind function call.
+- __qAModel__ needs question, docs, notes
+- Use similarity search to get __relevant docs__
+- Use url to get __paper notes__
+- response gotten from __qAModel__ used to save relevant data to __arxiv_question_answering__ table

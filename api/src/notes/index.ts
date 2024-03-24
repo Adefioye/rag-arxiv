@@ -10,7 +10,7 @@ import {
   NOTES_TOOL_SCHEMA,
   NOTE_PROMPT,
   outputParser,
-} from "prompt.js";
+} from "notes/prompt.js";
 import { SupabaseDatabase } from "database.js";
 
 async function deletePages(
@@ -87,16 +87,26 @@ export async function takeNotes(
     pdfAsBuffer = await deletePages(pdfAsBuffer, pagesToDelete);
   }
   const documents = await convertPdfToDocument(pdfAsBuffer);
-  // const documentsAsString = await readFile(`pdfs/document.json`, "utf-8");
-  // const documents = JSON.parse(documentsAsString);
-  console.log("Documents: ", documents);
-  const notes = await generateNotes(documents);
-  const database = await SupabaseDatabase.fromDocuments(documents);
+  // Add url to document metadata
+  const documentsWithUrlMetadata = documents.map((doc) => {
+    return {
+      ...doc,
+      metadata: {
+        ...doc.metadata,
+        url: paperUrl,
+      },
+    };
+  });
+  console.log("Docs with url: ", documentsWithUrlMetadata)
+  const notes = await generateNotes(documentsWithUrlMetadata);
+  const database = await SupabaseDatabase.fromDocuments(
+    documentsWithUrlMetadata
+  );
   console.log("Notes: ", notes);
   console.log("Add paper to table...");
   await Promise.all([
     database.addPaper({
-      paper: formatDocumentsAsString(documents),
+      paper: formatDocumentsAsString(documentsWithUrlMetadata),
       url: paperUrl,
       notes,
       name,
