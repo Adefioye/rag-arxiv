@@ -74,10 +74,16 @@ async function generateNotes(
 export async function takeNotes(
   paperUrl: string,
   name: string,
-  pagesToDelete: number[]
+  pagesToDelete?: number[]
 ): Promise<ArxivPaperNote[]> {
   if (!paperUrl.endsWith("pdf")) {
     throw new Error("Not a PDF");
+  }
+
+  let database = await SupabaseDatabase.fromExistingIndex();
+  const existingPaper = await database.getPaper(paperUrl);
+  if (existingPaper) {
+    return existingPaper.notes as Array<ArxivPaperNote>;
   }
 
   let pdfAsBuffer = await loadPdfFromUrl(paperUrl);
@@ -97,11 +103,9 @@ export async function takeNotes(
       },
     };
   });
-  console.log("Docs with url: ", documentsWithUrlMetadata)
+  console.log("Docs with url: ", documentsWithUrlMetadata);
   const notes = await generateNotes(documentsWithUrlMetadata);
-  const database = await SupabaseDatabase.fromDocuments(
-    documentsWithUrlMetadata
-  );
+  database = await SupabaseDatabase.fromDocuments(documentsWithUrlMetadata);
   console.log("Notes: ", notes);
   console.log("Add paper to table...");
   await Promise.all([
